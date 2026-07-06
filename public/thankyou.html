@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thank You - Avocast</title>
+  <link rel="stylesheet" href="index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* Custom checkmark animations */
+    @keyframes stroke {
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+    @keyframes scale {
+      0%, 100% {
+        transform: none;
+      }
+      50% {
+        transform: scale3d(1.1, 1.1, 1);
+      }
+    }
+    @keyframes fill {
+      100% {
+        box-shadow: inset 0px 0px 0px 30px rgba(16, 185, 129, 0.1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="glass-card" style="text-align: center; max-width: 500px; margin: 2rem auto; padding: 4rem 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem;">
+      <div id="companyLogoContainer" style="min-height: 80px; display: flex; align-items: center; justify-content: center; width: 100%;">
+        <!-- Dynamic Company Logo or Fallback Avocast logo goes here -->
+        <div style="color: var(--text-secondary);">Loading logo...</div>
+      </div>
+      
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <h1 style="font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Thank You!</h1>
+        <p style="font-size: 1.25rem; color: var(--text-secondary); max-width: 380px; margin: 0 auto; line-height: 1.6;">
+          Thank you for taking part in our survey!
+        </p>
+      </div>
+
+      <div class="success-icon-container" style="display: flex; justify-content: center; align-items: center; margin-top: 1rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" style="width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 3; stroke: #10b981; stroke-miterlimit: 10; box-shadow: inset 0px 0px 0px #10b981; animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;">
+          <circle cx="26" cy="26" r="25" fill="none" style="stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 3; stroke-miterlimit: 10; stroke: #10b981; fill: none; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;"/>
+          <path fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" style="transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get('userId');
+      const logoContainer = document.getElementById('companyLogoContainer');
+
+      if (userId) {
+        try {
+          const response = await fetch(`/api/user/${userId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.user && data.user.logoBase64) {
+              logoContainer.innerHTML = `<img src="${data.user.logoBase64}" alt="${data.user.companyName} Logo" style="max-height: 100px; max-width: 100%; object-fit: contain;" />`;
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user profile for logo:', error);
+        }
+      }
+      
+      // Fallback
+      logoContainer.innerHTML = `<img class="avocast-logo" src="assets/icons/avocast_logo_transparent.png" alt="Avocast Logo" style="max-height: 70px; margin: 0;" />`;
+    });
+  </script>
+</body>
+</html>
