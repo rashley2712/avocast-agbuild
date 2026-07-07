@@ -80,6 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
     authForm.reset();
     loginSection.style.display = 'block';
     welcomeSection.style.display = 'none';
+    
+    // Clear user-specific DOM states
+    logoPreview.innerHTML = `<span style="font-size: 0.7rem; color: var(--text-secondary); text-align: center;">No Logo</span>`;
+    surveyList.innerHTML = '';
+    reportList.innerHTML = '';
+    welcomeMessage.textContent = 'Welcome back.';
   });
 
   createSurveyForm.addEventListener('submit', async (e) => {
@@ -122,6 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const user = JSON.parse(localStorage.getItem('avocastUser'));
     if (user && user.logoBase64) {
       logoPreview.innerHTML = `<img src="${user.logoBase64}" style="width: 100%; height: 100%; object-fit: contain;" />`;
+    } else {
+      logoPreview.innerHTML = `<span style="font-size: 0.7rem; color: var(--text-secondary); text-align: center;">No Logo</span>`;
     }
 
     if (userId) {
