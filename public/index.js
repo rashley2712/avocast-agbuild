@@ -24,6 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const reportList = document.getElementById('reportList');
   const surveyReportModal = document.getElementById('surveyReportModal');
   const closeReportBtn = document.getElementById('closeReportBtn');
+  
+  const tabOverall = document.getElementById('tabOverall');
+  const tabHourly = document.getElementById('tabHourly');
+  const overallReportView = document.getElementById('overallReportView');
+  const hourlyReportView = document.getElementById('hourlyReportView');
 
   // Check localStorage for existing user
   const storedUser = localStorage.getItem('avocastUser');
@@ -433,6 +438,20 @@ document.addEventListener('DOMContentLoaded', () => {
     surveyReportModal.style.display = 'none';
   });
 
+  tabOverall.addEventListener('click', () => {
+    tabOverall.classList.add('active-tab');
+    tabHourly.classList.remove('active-tab');
+    overallReportView.style.display = 'block';
+    hourlyReportView.style.display = 'none';
+  });
+
+  tabHourly.addEventListener('click', () => {
+    tabHourly.classList.add('active-tab');
+    tabOverall.classList.remove('active-tab');
+    overallReportView.style.display = 'none';
+    hourlyReportView.style.display = 'block';
+  });
+
   function renderReports(surveys) {
     if (!surveys || surveys.length === 0) {
       reportList.innerHTML = '<p>No surveys available for reporting.</p>';
@@ -464,7 +483,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!user || !user.userId) return;
 
     try {
-      const response = await fetch(`/api/reports/${formId}?userId=${user.userId}`);
+      // Reset active tab view on modal opening
+      tabOverall.classList.add('active-tab');
+      tabHourly.classList.remove('active-tab');
+      overallReportView.style.display = 'block';
+      hourlyReportView.style.display = 'none';
+
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      const response = await fetch(`/api/reports/${formId}?userId=${user.userId}&tz=${encodeURIComponent(tz)}`);
       if (!response.ok) {
         alert('Failed to fetch survey report.');
         return;
@@ -530,6 +556,87 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => {
             row.querySelector('.progress-bar-fill').style.width = `${percentage}%`;
           }, 50);
+        });
+      }
+
+      // Process and Render Hourly Report
+      const hourlyContainer = document.getElementById('hourlyReportContainer');
+      hourlyContainer.innerHTML = '';
+      
+      const hourlyData = {};
+      if (data.hourlyReport) {
+        data.hourlyReport.forEach(item => {
+          const hr = parseInt(item.hour, 10);
+          const rating = parseInt(item.rating, 10);
+          const count = parseInt(item.count, 10);
+          
+          if (!hourlyData[hr]) {
+            hourlyData[hr] = {
+              hour: hr,
+              counts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+              totalVotes: 0,
+              totalScore: 0
+            };
+          }
+          
+          if (rating >= 1 && rating <= 5) {
+            hourlyData[hr].counts[rating] = count;
+            hourlyData[hr].totalVotes += count;
+            hourlyData[hr].totalScore += rating * count;
+          }
+        });
+      }
+      
+      const sortedHours = Object.values(hourlyData).sort((a, b) => a.hour - b.hour);
+      
+      if (sortedHours.length === 0) {
+        hourlyContainer.innerHTML = '<p style="text-align: center; color: var(--text-secondary); margin-top: 2rem;">No hourly rating data available.</p>';
+      } else {
+        const ratingColors = {
+          1: '#f87171', // Red
+          2: '#fb923c', // Orange
+          3: '#facc15', // Yellow
+          4: '#a3e635', // Light Green
+          5: '#34d399'  // Emerald Green
+        };
+        
+        sortedHours.forEach(hrData => {
+          const avgRating = hrData.totalVotes > 0 ? (hrData.totalScore / hrData.totalVotes).toFixed(1) : '0.0';
+          const pad = (n) => String(n).padStart(2, '0');
+          const hourLabel = `${pad(hrData.hour)}:00 - ${pad((hrData.hour + 1) % 24)}:00`;
+          
+          const row = document.createElement('div');
+          row.className = 'hourly-row';
+          
+          let headerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
+              <span style="font-weight: 700; color: #ffffff;">${hourLabel}</span>
+              <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <span style="color: var(--text-secondary); font-size: 0.8rem;">${hrData.totalVotes} votes</span>
+                <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.8rem;">★ ${avgRating}</span>
+              </div>
+            </div>
+          `;
+          
+          let barHTML = `
+            <div style="height: 12px; width: 100%; display: flex; border-radius: 6px; overflow: hidden; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.05); margin-top: 0.25rem;">
+          `;
+          
+          for (let r = 1; r <= 5; r++) {
+            const count = hrData.counts[r];
+            if (count > 0) {
+              const pct = ((count / hrData.totalVotes) * 100).toFixed(1);
+              const labelText = emojis[r-1] + ' ' + labels[r-1];
+              barHTML += `
+                <div style="width: ${pct}%; background: ${ratingColors[r]}; height: 100%;" 
+                     title="${labelText}: ${count} votes (${pct}%)"></div>
+              `;
+            }
+          }
+          
+          barHTML += `</div>`;
+          row.innerHTML = headerHTML + barHTML;
+          hourlyContainer.appendChild(row);
         });
       }
 

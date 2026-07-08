@@ -280,14 +280,35 @@ app.get('/api/reports/:formId', async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized access to survey report' });
     }
 
+    const tz = req.query.tz || 'UTC';
+
     const query = `SELECT rating, COUNT(*) as count FROM \`${datasetId}.survey_feedback\` WHERE formId = @formId GROUP BY rating ORDER BY rating`;
     const options = {
       query: query,
       params: { formId },
     };
-    const [rows] = await bigquery.query(options);
 
-    res.status(200).json({ survey, report: rows });
+    const hourlyQuery = `
+      SELECT 
+        EXTRACT(HOUR FROM createdAt AT TIME ZONE @tz) as hour,
+        rating,
+        COUNT(*) as count
+      FROM \`${datasetId}.survey_feedback\`
+      WHERE formId = @formId
+      GROUP BY hour, rating
+      ORDER BY hour, rating
+    `;
+    const hourlyOptions = {
+      query: hourlyQuery,
+      params: { formId, tz },
+    };
+
+    const [[rows], [hourlyRows]] = await Promise.all([
+      bigquery.query(options),
+      bigquery.query(hourlyOptions)
+    ]);
+
+    res.status(200).json({ survey, report: rows, hourlyReport: hourlyRows });
   } catch (error) {
     console.error('Error fetching survey report:', error);
     res.status(500).json({ error: 'Failed to fetch survey report' });

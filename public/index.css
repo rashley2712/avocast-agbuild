@@ -588,3 +588,53 @@ p {
   border-color: var(--accent-color) !important;
   box-shadow: 0 0 15px rgba(26, 115, 232, 0.4) !important;
 }
+
+/* Report tabs style */
+.tab-btn {
+  background: none !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  color: var(--text-secondary) !important;
+  padding: 0.5rem 1rem !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  font-size: 0.9rem !important;
+  transition: all 0.3s ease !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  width: auto !important;
+  margin: 0 !important;
+}
+
+.tab-btn:hover {
+  color: #ffffff !important;
+}
+
+.tab-btn.active-tab {
+  color: #ffffff !important;
+  border-bottom: 2px solid var(--accent-color) !important;
+}
+
+/* Custom scrollbar for hourly report view */
+#hourlyReportContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+#hourlyReportContainer::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+#hourlyReportContainer::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+#hourlyReportContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.hourly-row {
+  margin-bottom: 0.25rem;
+}
+
