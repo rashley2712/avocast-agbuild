@@ -638,3 +638,17 @@ p {
   margin-bottom: 0.25rem;
 }
 
+/* Histogram styles */
+.histogram-bar {
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+.histogram-bar:hover {
+  opacity: 1;
+  transform: scaleY(1.03);
+  filter: brightness(1.1);
+}
+
+

@@ -142,9 +142,10 @@
       <h3 id="reportTitle">Survey Report</h3>
       <p id="reportQuestion" style="color: var(--text-secondary); margin-bottom: 1.5rem; text-align: center; font-size: 1rem;"></p>
       
-      <div class="report-tabs" style="display: flex; gap: 1rem; border-bottom: 1px solid var(--card-border); margin-bottom: 1.5rem; width: 100%; justify-content: center;">
+      <div class="report-tabs" style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--card-border); margin-bottom: 1.5rem; width: 100%; justify-content: center; flex-wrap: wrap;">
         <button type="button" id="tabOverall" class="tab-btn active-tab">Overall Summary</button>
         <button type="button" id="tabHourly" class="tab-btn">Time of Day</button>
+        <button type="button" id="tabHistogram" class="tab-btn">Hourly Average</button>
       </div>
 
       <div id="overallReportView" style="width: 100%;">
@@ -167,6 +168,12 @@
       <div id="hourlyReportView" style="width: 100%; display: none; margin-bottom: 2rem;">
         <div id="hourlyReportContainer" style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-height: 350px; overflow-y: auto; padding-right: 0.5rem;">
           <!-- Hourly rows will be injected here -->
+        </div>
+      </div>
+
+      <div id="histogramReportView" style="width: 100%; display: none; margin-bottom: 2rem;">
+        <div id="histogramContainer" style="display: flex; flex-direction: column; gap: 1.5rem; width: 100%;">
+          <!-- Histogram element will be injected here -->
         </div>
       </div>
       

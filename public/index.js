@@ -27,8 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const tabOverall = document.getElementById('tabOverall');
   const tabHourly = document.getElementById('tabHourly');
+  const tabHistogram = document.getElementById('tabHistogram');
   const overallReportView = document.getElementById('overallReportView');
   const hourlyReportView = document.getElementById('hourlyReportView');
+  const histogramReportView = document.getElementById('histogramReportView');
+  const histogramContainer = document.getElementById('histogramContainer');
 
   // Check localStorage for existing user
   const storedUser = localStorage.getItem('avocastUser');
@@ -441,15 +444,28 @@ document.addEventListener('DOMContentLoaded', () => {
   tabOverall.addEventListener('click', () => {
     tabOverall.classList.add('active-tab');
     tabHourly.classList.remove('active-tab');
+    tabHistogram.classList.remove('active-tab');
     overallReportView.style.display = 'block';
     hourlyReportView.style.display = 'none';
+    histogramReportView.style.display = 'none';
   });
 
   tabHourly.addEventListener('click', () => {
     tabHourly.classList.add('active-tab');
     tabOverall.classList.remove('active-tab');
+    tabHistogram.classList.remove('active-tab');
     overallReportView.style.display = 'none';
     hourlyReportView.style.display = 'block';
+    histogramReportView.style.display = 'none';
+  });
+
+  tabHistogram.addEventListener('click', () => {
+    tabHistogram.classList.add('active-tab');
+    tabOverall.classList.remove('active-tab');
+    tabHourly.classList.remove('active-tab');
+    overallReportView.style.display = 'none';
+    hourlyReportView.style.display = 'none';
+    histogramReportView.style.display = 'block';
   });
 
   function renderReports(surveys) {
@@ -486,8 +502,10 @@ document.addEventListener('DOMContentLoaded', () => {
       // Reset active tab view on modal opening
       tabOverall.classList.add('active-tab');
       tabHourly.classList.remove('active-tab');
+      tabHistogram.classList.remove('active-tab');
       overallReportView.style.display = 'block';
       hourlyReportView.style.display = 'none';
+      histogramReportView.style.display = 'none';
 
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
       const response = await fetch(`/api/reports/${formId}?userId=${user.userId}&tz=${encodeURIComponent(tz)}`);
@@ -638,6 +656,71 @@ document.addEventListener('DOMContentLoaded', () => {
           row.innerHTML = headerHTML + barHTML;
           hourlyContainer.appendChild(row);
         });
+      }
+
+      // Render Average Rating Histogram
+      const histogramContainer = document.getElementById('histogramContainer');
+      histogramContainer.innerHTML = '';
+      
+      if (sortedHours.length === 0) {
+        histogramContainer.innerHTML = '<p style="text-align: center; color: var(--text-secondary); margin-top: 2rem;">No hourly rating data available.</p>';
+      } else {
+        const padHour = (n) => String(n).padStart(2, '0');
+        const minHour = sortedHours.reduce((min, h) => h.hour < min ? h.hour : min, 24);
+        const maxHour = sortedHours.reduce((max, h) => h.hour > max ? h.hour : max, 0);
+        
+        const activeHoursMap = {};
+        sortedHours.forEach(h => {
+          activeHoursMap[h.hour] = h;
+        });
+
+        let chartHTML = `
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; background: rgba(0, 0, 0, 0.15); padding: 1.5rem 1rem 1rem; border-radius: 16px; border: 1px solid var(--card-border);">
+            <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 160px; width: 100%; border-bottom: 2px solid rgba(255, 255, 255, 0.1); padding-bottom: 0.25rem; position: relative;">
+              <!-- Y-axis guide lines -->
+              <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none;">
+                <div style="border-top: 1px dashed rgba(255, 255, 255, 0.05); width: 100%; height: 0; display: flex; align-items: center;"><span style="font-size: 0.6rem; color: rgba(255,255,255,0.25); margin-top: -6px; margin-left: 2px;">5.0</span></div>
+                <div style="border-top: 1px dashed rgba(255, 255, 255, 0.05); width: 100%; height: 0; display: flex; align-items: center;"><span style="font-size: 0.6rem; color: rgba(255,255,255,0.25); margin-top: -6px; margin-left: 2px;">4.0</span></div>
+                <div style="border-top: 1px dashed rgba(255, 255, 255, 0.05); width: 100%; height: 0; display: flex; align-items: center;"><span style="font-size: 0.6rem; color: rgba(255,255,255,0.25); margin-top: -6px; margin-left: 2px;">3.0</span></div>
+                <div style="border-top: 1px dashed rgba(255, 255, 255, 0.05); width: 100%; height: 0; display: flex; align-items: center;"><span style="font-size: 0.6rem; color: rgba(255,255,255,0.25); margin-top: -6px; margin-left: 2px;">2.0</span></div>
+                <div style="border-top: 1px dashed rgba(255, 255, 255, 0.05); width: 100%; height: 0; display: flex; align-items: center;"><span style="font-size: 0.6rem; color: rgba(255,255,255,0.25); margin-top: -6px; margin-left: 2px;">1.0</span></div>
+              </div>
+        `;
+
+        for (let hr = minHour; hr <= maxHour; hr++) {
+          const hrData = activeHoursMap[hr];
+          if (hrData && hrData.totalVotes > 0) {
+            const avgRating = (hrData.totalScore / hrData.totalVotes).toFixed(1);
+            const heightPct = (parseFloat(avgRating) / 5) * 100;
+            const hourLabel = `${padHour(hr)}:00 - ${padHour((hr+1)%24)}:00`;
+            
+            chartHTML += `
+              <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; position: relative; z-index: 2;">
+                <span style="font-size: 0.65rem; color: #34d399; font-weight: 700; margin-bottom: 0.15rem; transform: scale(0.9);">${avgRating}</span>
+                <div class="histogram-bar" style="width: 65%; height: ${heightPct}%; background: linear-gradient(180deg, var(--accent-color) 0%, var(--success-color) 100%); border-radius: 4px 4px 0 0; transition: height 0.8s cubic-bezier(0.1, 0.8, 0.3, 1);" 
+                     title="Hour ${hourLabel}: Average ${avgRating} (${hrData.totalVotes} votes)"></div>
+                <span style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 0.25rem; font-weight: 500; font-family: monospace;">${padHour(hr)}h</span>
+              </div>
+            `;
+          } else {
+            chartHTML += `
+              <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; position: relative; z-index: 2;">
+                <span style="font-size: 0.65rem; color: transparent; margin-bottom: 0.15rem;">-</span>
+                <div style="width: 65%; height: 0%; border-bottom: 1px dashed rgba(255, 255, 255, 0.15);"></div>
+                <span style="font-size: 0.65rem; color: rgba(255, 255, 255, 0.25); margin-top: 0.25rem; font-weight: 500; font-family: monospace;">${padHour(hr)}h</span>
+              </div>
+            `;
+          }
+        }
+
+        chartHTML += `
+            </div>
+            <div style="text-align: center; font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">
+              Histogram: Average rating (1.0 to 5.0) per hour of the day
+            </div>
+          </div>
+        `;
+        histogramContainer.innerHTML = chartHTML;
       }
 
       surveyReportModal.style.display = 'flex';
